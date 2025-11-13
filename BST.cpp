@@ -128,60 +128,103 @@ int findMinValueNoRecursive(struct node* root) {
 // ===============================================
 // 1. Find the kth largest element in the BST
 // ===============================================
-// @param root: pointer to BST root
-// @param k: order number (1 = largest, 2 = 2nd largest, etc.)
-// @return pointer to node that holds the kth largest value,
-//         or NULL if k > number of nodes
 struct node* findKthLargest(struct node* root, int k) {
-    // TODO: Implement using reverse in-order traversal 
-    // Hints:
-    //  - Use a static or reference counter that decrements each visit.
-    //  - When counter reaches 0, return the current node.
-    return NULL; // placeholder
+    static int count;
+    static struct node* result;
+    static bool current = false;
+    
+    if (!current) {
+        count = k;
+        result = NULL;
+        current = true;
+    }
+    
+    if (root == NULL) return NULL;
+    
+    findKthLargest(root->right, k);
+    
+    count--;
+    if (count == 0 && result == NULL) {
+        result = root;
+        current = false;
+        return result;
+    }
+    
+    if (result != NULL) {
+        current = false;
+        return result;
+    }
+    
+    return findKthLargest(root->left, k);
 }
 
 // ===============================================
 // 2. Find minimum absolute difference between any
 //     two node values in the BST
 // ===============================================
-// @param root: pointer to BST root
-// @return smallest absolute difference between any two nodes
 int getMinimumDifference(struct node* root) {
-    // TODO: Implement using in-order traversal
-    // Hints:
-    //  - Keep track of previous nodes value (prev).
-    //  - Compare abs(current - prev) at each step and update minDiff.
-    return -1; // placeholder
+    static int prev;
+    static int minDiff;
+    static bool current = false;
+    
+    if (!current) {
+        prev = INT_MIN;
+        minDiff = INT_MAX;
+        current = true;
+    }
+    
+    if (root == NULL) return minDiff;
+    
+    getMinimumDifference(root->left);
+    
+    if (prev != INT_MIN) {
+        int diff = abs(root->data - prev);
+        if (diff < minDiff)
+            minDiff = diff;
+    }
+    prev = root->data;
+    
+    getMinimumDifference(root->right);
+    
+   
+    return minDiff;
 }
 
 // ===============================================
 // 3. Delete a node by value
 // ===============================================
-// @param rootRef: pointer to pointer to root
-// @param data: integer value to delete
-// @return pointer to deleted node (if found), otherwise NULL
 struct node* deleteNode(struct node** rootRef, int data) {
-    // TODO: Implement standard BST deletion
-    // Steps:
-    //  1. Search for node.
-    //  2. If node has:
-    //     - No child: delete directly.
-    //     - One child: replace node with child.
-    //     - Two children: find inorder successor (min node in right subtree),
-    //       copy successors data, and delete that successor.
-    return NULL; // placeholder
+    if (*rootRef == NULL) return NULL;
+    
+    if (data < (*rootRef)->data) {
+        return deleteNode(&((*rootRef)->left), data);
+    } else if (data > (*rootRef)->data) {
+        return deleteNode(&((*rootRef)->right), data);
+    } else {
+        struct node* toDelete = *rootRef;
+        if ((*rootRef)->left == NULL) {
+            *rootRef = (*rootRef)->right;
+            return toDelete;
+        } else if ((*rootRef)->right == NULL) {
+            *rootRef = (*rootRef)->left;
+            return toDelete;
+        } else {
+            struct node* next = findMinValueNode((*rootRef)->right);
+            (*rootRef)->data = next->data;
+            return deleteNode(&((*rootRef)->right), next->data);
+        }
+    }
 }
 
 // ===============================================
 // 4. Delete all nodes
 // ===============================================
-// @param rootRef: pointer to pointer to root
-// @return void
 void deleteTree(struct node** rootRef) {
-    // TODO: Recursively delete all nodes (post-order)
-    //  1. Delete left subtree.
-    //  2. Delete right subtree.
-    //  3. Delete current node and set root to NULL.
+    if (*rootRef == NULL) return;
+    deleteTree(&((*rootRef)->left));
+    deleteTree(&((*rootRef)->right));
+    delete *rootRef;
+    *rootRef = NULL;
 }
 
 int main() {
@@ -203,8 +246,9 @@ int main() {
     // Minimum absolute difference
     cout << "Minimum absolute difference: " << getMinimumDifference(root) << endl;
 
+
     // Delete node
-    cout << "\nDeleting node with value 20..." << endl;
+    cout << "\nDeleting node" << endl;
     struct node* deleted = deleteNode(&root, 20);
     if (deleted != NULL){
       cout << "Deleted node had value: " << deleted->data << endl;
@@ -212,7 +256,7 @@ int main() {
     }
 
     // Cleanup all nodes
-    cout << "\nDeleting all nodes..." << endl;
+    cout << "\nDeleting all nodes" << endl;
     deleteTree(&root);
     if(root == NULL)
       cout << "Tree successfully cleared." << endl;
@@ -221,3 +265,4 @@ int main() {
 
     return 0;
 }
+
